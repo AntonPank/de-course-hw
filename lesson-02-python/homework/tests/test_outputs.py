@@ -34,6 +34,7 @@ BRONZE_SCHEMA = {
 
 # --- Task 1: bronze --------------------------------------------------------
 
+
 def test_bronze_schema(bronze: pl.DataFrame):
     assert dict(bronze.schema) == BRONZE_SCHEMA
 
@@ -53,6 +54,7 @@ def test_bronze_created_at_is_utc(bronze: pl.DataFrame):
 
 
 # --- Task 2: silver --------------------------------------------------------
+
 
 def test_silver_schema(silver: pl.DataFrame):
     assert dict(silver.schema) == BRONZE_SCHEMA
@@ -78,6 +80,7 @@ def test_silver_unique_event_id(silver: pl.DataFrame):
 
 # --- Task 3: silver partitioned by event_type ------------------------------
 
+
 def test_partition_directories(silver_partitioned: pl.DataFrame):
     # event_type is recovered from the Hive directory names on read.
     assert set(silver_partitioned["event_type"].unique()) == TARGET_EVENT_TYPES
@@ -88,6 +91,7 @@ def test_partition_roundtrip_row_count(silver_partitioned: pl.DataFrame):
 
 
 # --- Task 4: gold repo_activity --------------------------------------------
+
 
 def test_repo_activity_schema(repo_activity: pl.DataFrame):
     assert dict(repo_activity.schema) == {
@@ -110,6 +114,7 @@ def test_repo_activity_sorted_desc(repo_activity: pl.DataFrame):
 
 # --- Task 5: gold activity_per_minute --------------------------------------
 
+
 def test_activity_per_minute_schema(activity_per_minute: pl.DataFrame):
     assert activity_per_minute.schema["minute"] == pl.Datetime("us", "UTC")
     assert activity_per_minute.schema["event_count"] == pl.Int64
@@ -121,6 +126,7 @@ def test_activity_per_minute_is_full_hour(activity_per_minute: pl.DataFrame):
 
 
 # --- Task 6: gold push_commits_by_repo -------------------------------------
+
 
 def test_push_commits_schema(push_commits: pl.DataFrame):
     assert dict(push_commits.schema) == {
