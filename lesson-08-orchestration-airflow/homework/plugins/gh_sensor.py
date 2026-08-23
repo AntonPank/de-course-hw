@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import requests
-
 from airflow.sensors.base import BaseSensorOperator
 
 
@@ -17,11 +16,6 @@ class GHArchiveSensor(BaseSensorOperator):
 
         try:
             response = requests.head(url)
-
-            if response.status_code == 200:
-              return True
+            return response.status_code == 200
+        except requests.RequestException:
             return False
-
-        except Exception:
-          return False
-
