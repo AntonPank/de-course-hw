@@ -65,9 +65,12 @@ def test_owner_totals_cover_every_event(out_owner_totals: pl.DataFrame) -> None:
 def test_owner_bot_events_never_exceed_owner_events(
     out_owner_totals: pl.DataFrame,
 ) -> None:
-    assert out_owner_totals.filter(
-        pl.col("owner_bot_events") > pl.col("owner_events")
-    ).height == 0
+    assert (
+        out_owner_totals.filter(
+            pl.col("owner_bot_events") > pl.col("owner_events")
+        ).height
+        == 0
+    )
 
 
 # ── top_repos ─────────────────────────────────────────────────────────────────
@@ -92,9 +95,10 @@ def test_top_repos_enriched_with_owner_totals(out_top_repos: pl.DataFrame) -> No
 
 
 def test_top_repos_count_never_exceeds_owner_total(out_top_repos: pl.DataFrame) -> None:
-    assert out_top_repos.filter(
-        pl.col("repo_event_count") > pl.col("owner_events")
-    ).height == 0
+    assert (
+        out_top_repos.filter(pl.col("repo_event_count") > pl.col("owner_events")).height
+        == 0
+    )
 
 
 # ── summary ───────────────────────────────────────────────────────────────────
@@ -112,7 +116,10 @@ def test_summary_each_dimension_covers_all_events(out_summary: pl.DataFrame) -> 
 
 
 def test_summary_grain_is_unique(out_summary: pl.DataFrame) -> None:
-    assert out_summary.select("dimension", "dimension_value").n_unique() == out_summary.height
+    assert (
+        out_summary.select("dimension", "dimension_value").n_unique()
+        == out_summary.height
+    )
 
 
 def test_summary_repo_owner_slice_matches_owner_totals(
