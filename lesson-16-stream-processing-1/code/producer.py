@@ -29,7 +29,8 @@ SCHEMA_PATH = "schemas/trip.avsc"
 
 MAX_EVENTS = 500  # 0 = replay the whole file
 SPEED = 1000  # compress event-time into wall-clock time; see note below
-LATE_EVENT_FRACTION = 0.0  # >0 injects late events, used for the L17 watermark demo
+LATE_EVENT_FRACTION = 0.0  # >0 injects late events; the L17 watermark demo sets this to 0.1
+LATE_EVENT_LAG_MINUTES = (5, 20)  # how far BACK in event time a late event is shifted
 
 # NOTE on SPEED: this compresses event-time into wall-clock time so we can show
 # in minutes what really spans days. It is a theatrical device for teaching only.
@@ -68,7 +69,10 @@ def load_trips() -> pd.DataFrame:
 def to_record(row) -> dict:
     pickup_ts = row["tpep_pickup_datetime"]
     if LATE_EVENT_FRACTION and random.random() < LATE_EVENT_FRACTION:
-        pickup_ts = pickup_ts - pd.Timedelta(seconds=random.randint(5, 30))  # simulate a late event
+        # Shift on a minutes scale: the lag must exceed the window size + watermark
+        # of the L17 query, otherwise the event is merely out of order, not late.
+        lag_minutes = random.randint(*LATE_EVENT_LAG_MINUTES)
+        pickup_ts = pickup_ts - pd.Timedelta(minutes=lag_minutes)
 
     return {
         "pickup_ts": int(pickup_ts.timestamp() * 1000),

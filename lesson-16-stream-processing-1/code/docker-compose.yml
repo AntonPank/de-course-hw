@@ -12,6 +12,11 @@
 #   8081  Schema Registry
 #   8082  Kafka UI (web)
 
+# Explicit project name: without it Compose derives the project from the parent
+# directory ("code"), which collides with lesson-08's airflow stack — `down -v`
+# in one lesson would then tear down the other.
+name: lesson16
+
 services:
   # --- Kafka broker in KRaft mode (combined broker + controller, no ZooKeeper) ---
   kafka:
