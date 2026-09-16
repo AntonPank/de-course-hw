@@ -12,6 +12,8 @@
 #
 # To consume the full topic independently (own offsets), edit GROUP_ID below.
 
+import time
+
 from confluent_kafka import Consumer
 from confluent_kafka.schema_registry import SchemaRegistryClient
 from confluent_kafka.schema_registry.avro import AvroDeserializer
@@ -40,7 +42,7 @@ def run_consumer():
 
     consumer = Consumer({
         "bootstrap.servers": BOOTSTRAP_SERVERS,
-        "group.id": GROUP_ID,
+        "group.id": "SOMETHING",
         "auto.offset.reset": "earliest",  # read from the start of the topic
         "enable.auto.commit": True,  # commit offsets to __consumer_offsets
     })
@@ -63,6 +65,7 @@ def run_consumer():
             )
             seen += 1
             ic(msg.partition(), msg.offset(), event["pu_location_id"], event["fare_amount"])
+            time.sleep(5)  # slow down for demo purposes
     except KeyboardInterrupt:
         ic(seen)
     finally:

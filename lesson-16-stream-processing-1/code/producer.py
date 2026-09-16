@@ -92,30 +92,31 @@ def replay_trips():
     first_event_time = df["tpep_pickup_datetime"].iloc[0]
     wall_clock_start = time.time()
     sent = 0
+    while True:
+        for _, row in df.iterrows():
+            # Event-time simulation: pace publishing to a compressed wall-clock time.
+            elapsed_event_seconds = (row["tpep_pickup_datetime"] - first_event_time).total_seconds()
+            target_wall_time = wall_clock_start + elapsed_event_seconds / SPEED
+            now = time.time()
+            if target_wall_time > now:
+                time.sleep(target_wall_time - now)
 
-    for _, row in df.iterrows():
-        # Event-time simulation: pace publishing to a compressed wall-clock time.
-        elapsed_event_seconds = (row["tpep_pickup_datetime"] - first_event_time).total_seconds()
-        target_wall_time = wall_clock_start + elapsed_event_seconds / SPEED
-        now = time.time()
-        if target_wall_time > now:
-            time.sleep(target_wall_time - now)
+            record = to_record(row)
+            producer.produce(
+                topic=TOPIC,
+                key=str(row["PULocationID"]),  # key → partition routing, ordering per zone
+                value=avro_serializer(record, SerializationContext(TOPIC, MessageField.VALUE)),
+                on_delivery=delivery_report,
+            )
+            producer.poll(0)  # non-blocking: serve delivery callbacks
 
-        record = to_record(row)
-        producer.produce(
-            topic=TOPIC,
-            key=str(row["PULocationID"]),  # key → partition routing, ordering per zone
-            value=avro_serializer(record, SerializationContext(TOPIC, MessageField.VALUE)),
-            on_delivery=delivery_report,
-        )
-        producer.poll(0)  # non-blocking: serve delivery callbacks
+            sent += 1
+            if sent % 100 == 0:
+                ic(sent)
 
-        sent += 1
-        if sent % 100 == 0:
-            ic(sent)
-
-    producer.flush()
-    ic(sent, TOPIC)
+        producer.flush()
+        ic(sent, TOPIC)
+        time.sleep(5)  # pause before replaying the file again
 
 
 if __name__ == "__main__":
