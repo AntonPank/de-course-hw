@@ -1,22 +1,73 @@
--- Крок 4: silver.issues. Специфікація: ../../SPEC.md → «Крок 4».
--- Джерело: {{ ref('events') }}, типи IssuesEvent ТА IssueCommentEvent (обидва несуть issue{}).
--- from_json(payload, ISSUE_SCHEMA), ISSUE_SCHEMA = var('issue_schema').
--- Грануляція: один рядок на (repo_name, issue_number) — стан з останньої за часом події.
--- Колонки: repo_name, issue_number, title, author_login, state, opened_at, closed_at,
---          comments, label_names, comment_events_seen, last_event_at, hours_to_close
+with parsed as (
+    select
+        event_id,
+        event_type,
+        repo_name,
+        created_at as event_at,
+        from_json(
+            payload,
+            '{{ var("issue_schema") }}'
+        ) as p
+    from {{ ref('events') }}
+    where event_type in ('IssuesEvent', 'IssueCommentEvent')
+),
 
--- TODO: замініть заглушку на запит згідно зі SPEC.md
+ranked as (
+    select
+        repo_name,
+        p.issue.number as issue_number,
+        p.issue.title as title,
+        p.issue.user.login as author_login,
+        p.issue.state as state,
+        to_timestamp(p.issue.created_at) as opened_at,
+        to_timestamp(p.issue.closed_at) as closed_at,
+        p.issue.comments as comments,
+        transform(p.issue.labels, x -> x.name) as label_names,
+
+        sum(
+            case
+                when event_type = 'IssueCommentEvent' then 1
+                else 0
+            end
+        ) over (
+            partition by repo_name, p.issue.number
+        ) as comment_events_seen,
+
+        event_at as last_event_at,
+
+        row_number() over (
+            partition by repo_name, p.issue.number
+            order by event_at desc, event_id desc
+        ) as rn
+    from parsed
+),
+
+latest as (
+    select *
+    from ranked
+    where rn = 1
+)
+
 select
-    cast(null as string)        as repo_name,
-    cast(null as int)           as issue_number,
-    cast(null as string)        as title,
-    cast(null as string)        as author_login,
-    cast(null as string)        as state,
-    cast(null as timestamp)     as opened_at,
-    cast(null as timestamp)     as closed_at,
-    cast(null as int)           as comments,
-    cast(null as array<string>) as label_names,
-    cast(null as bigint)        as comment_events_seen,
-    cast(null as timestamp)     as last_event_at,
-    cast(null as double)        as hours_to_close
-where false
+    repo_name,
+    issue_number,
+    title,
+    author_login,
+    state,
+    opened_at,
+    closed_at,
+    comments,
+    label_names,
+    comment_events_seen,
+    last_event_at,
+    case
+        when closed_at is null then null
+        else cast(
+            (
+                unix_timestamp(closed_at)
+                - unix_timestamp(opened_at)
+            ) / 3600.0
+            as double
+        )
+    end as hours_to_close
+from latest
