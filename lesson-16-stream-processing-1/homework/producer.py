@@ -1,5 +1,3 @@
-# Завдання 3: Kafka producer.
-# Запуск із цієї директорії (homework/):  uv run python producer.py
 import gzip
 import json
 import urllib.request
@@ -10,7 +8,6 @@ from icecream import ic
 
 from transform import event_filter, flatten_event
 
-# Дано, не редагувати.
 BOOTSTRAP_SERVERS = "localhost:9092"
 TOPIC = "github-events"
 ARCHIVE_URL = "https://data.gharchive.org/2024-01-15-14.json.gz"
@@ -37,28 +34,36 @@ def iter_archive(url: str, max_raw: int) -> Iterator[dict]:
 
 
 def build_producer() -> Producer:
-    """Завдання 3a.
-
-    Поверніть налаштований confluent_kafka.Producer, що під'єднується до
-    BOOTSTRAP_SERVERS. Увімкніть idempotent producer (`enable.idempotence`) і
-    `acks="all"`, щоб ретраї не створювали дублікатів.
-    """
-    raise NotImplementedError("Реалізуйте build_producer")
+    return Producer(
+        {
+            "bootstrap.servers": BOOTSTRAP_SERVERS,
+            "enable.idempotence": True,
+            "acks": "all",
+        }
+    )
 
 
 def run_producer() -> int:
-    """Завдання 3b (разом 25 балів).
+    producer = build_producer()
+    sent = 0
 
-    1. Створіть producer через build_producer().
-    2. Пройдіть події з iter_archive(ARCHIVE_URL, MAX_RAW).
-    3. Відкиньте ті, що не проходять event_filter().
-    4. Для решти: flatten_event(), потім produce у топік TOPIC,
-       де key = repo_name (bytes), value = JSON-байти запису.
-       Ключ за repo_name тримає події одного репозиторію в одній partition.
-    5. Після кожного produce() викликайте producer.poll(0) (не блокуюче).
-    6. Наприкінці producer.flush(30). Поверніть к-сть надісланих подій.
-    """
-    raise NotImplementedError("Реалізуйте run_producer")
+    for event in iter_archive(ARCHIVE_URL, MAX_RAW):
+        if not event_filter(event):
+            continue
+
+        flat = flatten_event(event)
+
+        producer.produce(
+            TOPIC,
+            key=flat["repo_name"].encode("utf-8"),
+            value=json.dumps(flat).encode("utf-8"),
+        )
+
+        producer.poll(0)
+        sent += 1
+
+    producer.flush(30)
+    return sent
 
 
 if __name__ == "__main__":

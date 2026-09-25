@@ -26,6 +26,7 @@ ISSUES_EVENT = {
 
 # ---- Task 1: flatten_event ----
 
+
 def test_flatten_push_event():
     rec = transform.flatten_event(PUSH_EVENT)
     assert rec["id"] == "100"
@@ -54,6 +55,7 @@ def test_flatten_nullable_payload_fields():
 
 # ---- Task 2: event_filter ----
 
+
 def test_filter_keeps_allowed_public():
     assert transform.event_filter(PUSH_EVENT) is True
     assert transform.event_filter(ISSUES_EVENT) is True
@@ -70,6 +72,7 @@ def test_filter_drops_private():
 
 # ---- Task 4: update_counts ----
 
+
 def test_update_counts_accumulates():
     by_type, by_repo = {}, {}
     events = [
@@ -84,6 +87,7 @@ def test_update_counts_accumulates():
 
 
 # ---- Task 5: top_repos ----
+
 
 def test_top_repos_orders_and_limits():
     by_repo = {"a/a": 5, "b/b": 9, "c/c": 9, "d/d": 1}
