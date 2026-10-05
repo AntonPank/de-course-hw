@@ -102,7 +102,17 @@ FLAT_ROWS = [
 EVENTS_ROWS = [
     ("1", "PushEvent", "alice", "acme/api", True, _ts(12), "acme", False, _ts(12)),
     ("2", "WatchEvent", "bob", "acme/web", True, _ts(12, 30), "acme", False, _ts(12)),
-    ("3", "IssuesEvent", "ci[bot]", "globex/lib", True, _ts(13, 10), "globex", True, _ts(13)),
+    (
+        "3",
+        "IssuesEvent",
+        "ci[bot]",
+        "globex/lib",
+        True,
+        _ts(13, 10),
+        "globex",
+        True,
+        _ts(13),
+    ),
     ("7", "PushEvent", None, "globex/cli", True, _ts(14), "globex", False, _ts(14)),
 ]
 

@@ -83,7 +83,12 @@ def test_clean_deduplicates_by_event_id(flat):
 
 
 def test_clean_result_is_exactly_expected(flat):
-    assert sorted(r[0] for r in _rows(job.clean(flat), "event_id")) == ["1", "2", "3", "7"]
+    assert sorted(r[0] for r in _rows(job.clean(flat), "event_id")) == [
+        "1",
+        "2",
+        "3",
+        "7",
+    ]
 
 
 # ── Крок 4 — with_derived ─────────────────────────────────────────────────────
@@ -169,7 +174,12 @@ def test_enrich_top_repos_attaches_owner_totals(events):
     top = job.top_repos_per_type(events, 5)
     out = job.enrich_top_repos(top, job.owner_totals(events))
     assert _rows(
-        out, "repo_name", "repo_owner", "owner_events", "owner_share", order_by=["repo_name"]
+        out,
+        "repo_name",
+        "repo_owner",
+        "owner_events",
+        "owner_share",
+        order_by=["repo_name"],
     ) == [
         ("acme/api", "acme", 2, 0.5),
         ("acme/web", "acme", 2, 0.5),
@@ -198,7 +208,11 @@ def test_summary_slice_columns(events):
 def test_summary_slice_aggregates_by_given_dimension(events):
     out = job.summary_slice(events, "event_type")
     assert _rows(
-        out, "dimension", "dimension_value", "events", "distinct_repos",
+        out,
+        "dimension",
+        "dimension_value",
+        "events",
+        "distinct_repos",
         order_by=["dimension_value"],
     ) == [
         ("event_type", "IssuesEvent", 1, 1),
@@ -265,5 +279,7 @@ def test_write_outputs_partitions_when_column_given(events, tmp_path, monkeypatc
 
 def test_write_outputs_handles_every_entry(events, tmp_path, monkeypatch):
     monkeypatch.setattr(job, "OUTPUT_DIR", str(tmp_path))
-    job.write_outputs({"a": (events, None), "b": (events, None), "c": (events, "repo_owner")})
+    job.write_outputs(
+        {"a": (events, None), "b": (events, None), "c": (events, "repo_owner")}
+    )
     assert {d.name for d in tmp_path.iterdir()} == {"a", "b", "c"}
