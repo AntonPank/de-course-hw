@@ -21,12 +21,16 @@ def land_raw_hour() -> str:
     """
     os.makedirs(config.LANDING_DIR, exist_ok=True)
     if os.path.exists(config.LANDING_FILE):
-        print(f"[landing] already present, skip: {os.path.basename(config.LANDING_FILE)}")
+        print(
+            f"[landing] already present, skip: {os.path.basename(config.LANDING_FILE)}"
+        )
         return config.LANDING_FILE
 
     print(f"[landing] downloading {config.GH_URL} ...")
     # gharchive.org returns 403 to urllib's default User-Agent.
-    req = urllib.request.Request(config.GH_URL, headers={"User-Agent": "de-course-l02/1.0"})
+    req = urllib.request.Request(
+        config.GH_URL, headers={"User-Agent": "de-course-l02/1.0"}
+    )
     with urllib.request.urlopen(req) as resp, open(config.LANDING_FILE, "wb") as out:
         while chunk := resp.read(1 << 20):
             out.write(chunk)
